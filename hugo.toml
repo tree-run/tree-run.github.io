@@ -1,0 +1,78 @@
+baseURL = 'https://tree-run.github.io/'
+locale = 'zn-cn'
+title = 'TREE-RUN的个人博客'
+theme = "PaperMod"
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+
+[params]
+  defaultTheme = "auto"
+
+  homeInfoParams = {
+    Title = "CTF 学习笔记 & WP",
+    Content = "记录Pwn、Misc、Crypto、Reverse做题过程"
+  }
+
+  # 显示文章阅读时长，可以估算阅读时间
+  ShowReadingTime = true  
+   
+  # 文章底部显示「上一篇 / 下一篇」导航链接
+  ShowPostNavLinks = true   
+
+  # 面包屑导航：页面顶部 首页 > 文章 > xxx，方便跳转
+  ShowBreadCrumbs = true
+
+  # 代码块右上角复制按钮，复制exp、命令、汇编代码
+  ShowCodeCopyButtons = true
+
+  # 显示文章总字数
+  ShowWordCount = true
+
+  # 使用Hugo内置目录：自动提取文章标题生成右侧目录
+  UseHugoToc = true
+
+  # 开启文章发布日期
+  ShowDate = true
+
+  # 开启站内搜索，方便检索题目
+  #ShowSearchButton = true
+
+  # 在文章卡片底部显示标签
+  ShowTags = true        
+
+  # 在文章卡片底部显示分类
+  ShowCategories = true  
+
+  # 标注作者
+  author = "TREE-RUN"
+
+ 
+
+
+
+
+
+
+
+[menu]
+  [[menu.main]]
+    name = "首页"
+    url = "/"
+    weight = 1
+  [[menu.main]]
+    name = "文章"
+    url = "/posts/"
+    weight = 2
+  [[menu.main]]
+    name = "标签"
+    url = "/tags/"
+    weight = 3
+  [[menu.main]]
+    name = "分类"
+    url = "/categories/"
+    weight = 4
+  [[menu.main]]
+   name = "搜索"
+   url = "/search/"
+   weight = 10
