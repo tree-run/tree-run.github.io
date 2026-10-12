@@ -2,7 +2,7 @@
 
 基于 Hugo + PaperMod 搭建的个人博客，存放CTF竞赛WP以及一些思考
 
-🔗 Blog Website：[](https://tree-run.github.io/)
+🔗 Blog Website：[点我访问👉](https://tree-run.github.io/)
 
 ## 环境
 
