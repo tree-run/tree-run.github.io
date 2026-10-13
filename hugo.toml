@@ -11,7 +11,7 @@ theme = "PaperMod"
 
   homeInfoParams = {
     Title = "CTF 学习笔记 & WP",
-    Content = "记录Pwn、Misc、Crypto、Reverse做题过程"
+    Content = "记录Pwn、Reverse、Crypto、Web、Misc的做题过程"
   }
 
   # 显示文章阅读时长，可以估算阅读时间
@@ -29,14 +29,15 @@ theme = "PaperMod"
   # 显示文章总字数
   ShowWordCount = true
 
-  # 使用Hugo内置目录：自动提取文章标题生成右侧目录
-  UseHugoToc = true
+  # 自动提取文章标题生成顶部目录
+  ShowToc = true
+  TocOpen = false
 
   # 开启文章发布日期
   ShowDate = true
 
   # 开启站内搜索，方便检索题目
-  #ShowSearchButton = true
+  ShowSearchButton = true
 
   # 在文章卡片底部显示标签
   ShowTags = true        
@@ -47,6 +48,37 @@ theme = "PaperMod"
   # 标注作者
   author = "TREE-RUN"
 
+  # 不蒜子
+  busuanzi = true
+
+  # 渲染图标
+  disableFontAwesome = false
+
+  # Githib
+  [[params.socialIcons]]
+  name = "github"
+  url = "https://github.com/TREE-RUN"
+
+  # Gitee
+  [[params.socialIcons]]
+  name = "gitee"
+  url = "https://gitee.com/run0x"
+
+  # CSDN
+  [[params.socialIcons]]
+  name = "Csdn"
+  url = "https://blog.csdn.net/2601_96814162"
+  
+  # 邮箱
+  [[params.socialIcons]]
+  name = "email"
+  url = 'mailto:15050522509@163.com?subject=CTF博客留言'
+
+  #
+  
+
+
+ 
  
 
 
@@ -73,6 +105,8 @@ theme = "PaperMod"
     url = "/categories/"
     weight = 4
   [[menu.main]]
-   name = "搜索"
-   url = "/search/"
-   weight = 10
+    name = "搜索"
+    url = "/search/"
+    weight = 5
+
+ 
