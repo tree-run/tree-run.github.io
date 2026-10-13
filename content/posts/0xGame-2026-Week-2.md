@@ -2,7 +2,7 @@
 date = '2026-10-12T11:56:53+08:00'
 draft = false
 title = '0xGame 2026 Week 2'
-tags = ["pwn"]
+tags = ["pwn","Stack Pivot","Format","ret2shellcode"]
 categories = ["CTF"]
 +++
 

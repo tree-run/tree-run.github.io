@@ -2,7 +2,7 @@
 date = '2026-10-12T11:55:55+08:00'
 draft = false
 title = '0xGame 2026 Week 1'
-tags = ["pwn"]
+tags = ["pwn","Buffer Overflow","ret2text","ret2libc","ret2csu","SROP"]
 categories = ["CTF"]
 +++
 
