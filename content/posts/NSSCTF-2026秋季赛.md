@@ -1,6 +1,6 @@
 +++
 date = '2026-10-28T22:13:41+08:00'
-draft = true
+draft = false
 title = 'NSSCTF 2026秋季赛'
 tags = ["pwn"]
 categories = ["CTF"]
@@ -11,7 +11,7 @@ description = ""
 
 显然是一个格式化字符串，根据提示，我们是可以直接将flag泄露出来，所以用%s就行了。从%1$s开始一个一个试，这里在%8$s出来了
 
-![图1](D:\my-blog\static\images\NSSCTF-2026秋季赛\图1.png)
+![图1](/images/NSSCTF-2026秋季赛/图1.png)
 
 ## never_arrive
 
@@ -80,11 +80,11 @@ C 语言强制 `(int)val` 的行为：**只保留低 32 比特，当成 signed i
 十进制：4294967296
 ```
 
-![图2](D:\my-blog\static\images\NSSCTF-2026秋季赛\图2.png)
+![图2](/images/NSSCTF-2026秋季赛/图2.png)
 
 这里本地测试一下，发现已经拿到shell了
 
-![图3](D:\my-blog\static\images\NSSCTF-2026秋季赛\图3.png)
+![图3](/images/NSSCTF-2026秋季赛/图3.png)
 
 简单写个脚本远程试一下
 
@@ -96,7 +96,7 @@ io.sendline(b'4294967296')
 io.interactive()
 ```
 
-![图4](D:\my-blog\static\images\NSSCTF-2026秋季赛\图4.png)
+![图4](/images/NSSCTF-2026秋季赛/图4.png)
 
 ## creeper?
 
@@ -225,7 +225,7 @@ io.send(b'4\n')          # 合成 -> system("$0") -> shell
 io.interactive()
 ```
 
-![图5](D:\my-blog\static\images\NSSCTF-2026秋季赛\图5.png)
+![图5](/images/NSSCTF-2026秋季赛/图5.png)
 
 ## going_run
 
@@ -395,6 +395,6 @@ io. interactive()
 
 ```
 
-![图6](D:\my-blog\static\images\NSSCTF-2026秋季赛\图6.png)
+![图6](/images/NSSCTF-2026秋季赛/图6.png)
 
 > 啊~格调！太有格调了！（bushi）
