@@ -1,6 +1,6 @@
 +++
 date = '2026-11-06T20:08:49+08:00'
-draft = true
+draft = false
 title = 'Shellcode'
 tags = ["shellcode"]
 categories = ["CTF"]
